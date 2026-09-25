@@ -1,0 +1,5 @@
+# Files that run on the Pi must keep Linux (LF) line endings
+*.sh            text eol=lf
+pi/**           text eol=lf
+*.ps1           text eol=crlf
+*.svg           text eol=lf

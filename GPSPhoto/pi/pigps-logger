@@ -1,0 +1,16 @@
+#!/bin/bash
+# PI_GPS: repair GPX files cut off by power loss, wait for GPS time, then log.
+# Install: sudo install -m 755 pigps-logger /usr/local/bin/pigps-logger
+DIR=/home/pigps/tracks
+mkdir -p "$DIR"
+for f in "$DIR"/*.gpx; do
+  [ -e "$f" ] || continue
+  grep -q '<trkpt' "$f" || { rm -f "$f"; continue; }      # no fix ever: drop it
+  tail -c 300 "$f" | grep -q '</gpx>' && continue          # already closed
+  [ "$(grep -oE '</?trkseg>' "$f" | tail -1)" = "<trkseg>" ] && \
+    printf '  </trkseg>\n </trk>\n' >> "$f"
+  printf '</gpx>\n' >> "$f"
+done
+chronyc waitsync 18 0.1 >/dev/null 2>&1 || true            # up to 3 min for GPS time
+# -r: keep running when the fix drops (new <trkseg> instead of exiting)
+exec /usr/bin/gpxlogger -r -i 30 -m 1 -f "$DIR/track_$(date -u +%Y%m%d_%H%M%SZ).gpx"

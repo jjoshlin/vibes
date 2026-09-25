@@ -1,0 +1,13 @@
+[Unit]
+Description=PI_GPS GPX track logger
+Wants=gpsd.service
+After=gpsd.service chrony.service
+
+[Service]
+User=pigps
+ExecStart=/usr/local/bin/pigps-logger
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

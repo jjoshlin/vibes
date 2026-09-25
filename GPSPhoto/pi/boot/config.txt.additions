@@ -1,0 +1,11 @@
+# Append to the END of /boot/firmware/config.txt (inside the [all] section).
+# The stock file also contains "dtoverlay=dwc2,dr_mode=host" under [cm5]; that only
+# applies to Compute Module 5 and is ignored on the Pi Zero.
+[all]
+dtoverlay=dwc2
+enable_uart=1
+dtoverlay=pps-gpio,gpiopin=18
+
+# Shutdown / wake button: momentary switch between pin 5 (GPIO3) and pin 14 (GND).
+# Hold ~1 s to power off; press again (power still connected) to boot.
+dtoverlay=gpio-shutdown,gpio_pin=3,active_low=1,gpio_pull=up,debounce=1000
