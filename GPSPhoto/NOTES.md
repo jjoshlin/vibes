@@ -73,5 +73,5 @@ Things that were not obvious, in the order they bit.
 - FAT timestamps on `bootfs` written by the Pi are UTC; Windows shows them as local.
 
 ## Don't `apt upgrade` casually
-- It pulled ~Chromium and desktop packages plus new boot firmware on a Zero. If you do
+- It pulled Chromium and desktop packages plus new boot firmware on a Zero. If you do
   upgrade, leave it plugged in until it finishes and reboot once while you're at a PC.
