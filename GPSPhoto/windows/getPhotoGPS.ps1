@@ -8,6 +8,7 @@ $Dest         = 'I:\gps\ingest'
 $RemoveFromPi = $true            # $false = copy only, leave everything on the Pi
 $Stamp        = Get-Date -Format 'yyyyMMdd'
 $Ssh          = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10')
+$Kmz          = Join-Path ($(if ($PSScriptRoot) { $PSScriptRoot } else { 'C:\Users\Watto\github\vibes\GPSPhoto\windows' })) 'gpx2kmz.py'
 
 if (-not (Test-Path 'I:\')) { Write-Host "Drive I: not found." -ForegroundColor Red; return }
 New-Item -ItemType Directory -Force $Dest | Out-Null
@@ -61,5 +62,8 @@ if ($RemoveFromPi -and $done.Count) {
     ssh @Ssh $Pi ('rm -f ' + (($done | ForEach-Object { "tracks/$_" }) -join ' '))
     if ($LASTEXITCODE -eq 0) { Write-Host "Removed $($done.Count) file(s) from the Pi." }
 }
+
+# 5. Google Earth copies: <name>.kmz next to each new .gpx
+if (Test-Path $Kmz) { python $Kmz $Dest } else { Write-Host "gpx2kmz.py not found, skipping KMZ" -ForegroundColor Yellow }
 
 explorer $Dest

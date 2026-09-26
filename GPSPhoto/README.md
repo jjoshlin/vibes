@@ -51,8 +51,10 @@ GPSPhoto/
 │   └── pigps-logger.service      systemd unit
 ├── windows/
 │   ├── setup-ssh-key.ps1         one-time passwordless SSH
-│   └── getPhotoGPS.ps1           move tracks to I:\gps\ingest
+│   ├── getPhotoGPS.ps1           move tracks to I:\gps\ingest (+ KMZ)
+│   └── gpx2kmz.py                GPX → Google Earth KMZ
 ├── esp32/esp32_pi_console_bridge ESP32 USB↔UART console bridge (fallback access)
+├── tools/ext4read.py             read tracks off the SD card from Windows
 └── docs/drive/                   original Google Drive docs (22 Sep 2026 snapshot)
 ```
 
@@ -98,6 +100,8 @@ Run `windows/setup-ssh-key.ps1` once in a normal PowerShell window, then
 `windows/getPhotoGPS.ps1` whenever you want to ingest. Tracks land in
 `I:\gps\ingest` as `track_YYYYMMDD_HHMMSSZ_ingested_YYYYMMDD.gpx` and are removed
 from the Pi after a size-verified copy (the track still being written is kept).
+Each new GPX also gets a `.kmz` next to it (via `gpx2kmz.py`, needs Python) that opens in
+Google Earth with a time slider. Cut-off tracks are repaired up to the last complete point.
 
 ## Field routine
 1. Power on; wait for the GPS FIX LED to blink once every 15 s.

@@ -14,6 +14,11 @@
 - README / NOTES / `cmdline.txt.example` now say to keep `modules-load=dwc2,g_ether`.
 
 ### Added
+- `windows/gpx2kmz.py`: GPX → KMZ for Google Earth (gx:Track with time slider,
+  start/end pins). Repairs truncated files (NUL padding / missing tags) by keeping
+  complete points. `getPhotoGPS.ps1` runs it after every ingest.
+- `pigps-logger` strips NUL padding left by a power cut before closing the GPX.
+- Test run: ingest moved 9 tracks (kept the active one on the Pi), 13 KMZ built.
 - `tools/ext4read.py`: read-only ext4 reader for a Pi SD card in a Windows reader
   (no WSL or extra software). Used to recover 8 tracks while USB was down.
 

@@ -7,6 +7,9 @@ for f in "$DIR"/*.gpx; do
   [ -e "$f" ] || continue
   grep -q '<trkpt' "$f" || { rm -f "$f"; continue; }      # no fix ever: drop it
   tail -c 300 "$f" | grep -q '</gpx>' && continue          # already closed
+  if grep -qaP '\x00' "$f"; then                            # power cut: NUL padding
+    tr -d '\000' < "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+  fi
   [ "$(grep -oE '</?trkseg>' "$f" | tail -1)" = "<trkseg>" ] && \
     printf '  </trkseg>\n </trk>\n' >> "$f"
   printf '</gpx>\n' >> "$f"
