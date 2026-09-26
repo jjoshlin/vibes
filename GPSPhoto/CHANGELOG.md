@@ -14,6 +14,25 @@
 - README / NOTES / `cmdline.txt.example` now say to keep `modules-load=dwc2,g_ether`.
 
 ### Added
+- GPS time at boot + every 10 min: `pi/pigps-timesync`, `pigps-timesync.timer`
+  (30 s after boot, then 10 min), `pigps-clocksave.service` (save at shutdown).
+  Root cause of the stale boot clock: systemd restores time from the mtime of
+  `/var/lib/systemd/timesync/clock`, which stopped updating when chrony replaced
+  systemd-timesyncd (frozen at 2026-09-25 09:27).
+- Tried gpsd `-r` (use the GPS module's clock before a fix) and removed it the same
+  day: the MTK3339 reported a date one day ahead before it had satellites, and the
+  sync script briefly set the Pi to 2026-09-27. Only a real fix is trusted now.
+- `pigps-timesync` waits up to 3 min for a fix at each run instead of giving up.
+- `getPhotoGPS.ps1` names ingested tracks by their first GPS timestamp.
+- Headless option (`install.sh --no-desktop` / `no-desktop` flag): boots to console,
+  disables desktop-only services and the automatic apt timers. Free RAM 229 → 318 MB.
+- `pi/pigps-firstrun.sh`: offline one-time installer run from `cmdline.txt`
+  (`systemd.run=`), for when the Pi is unreachable. Removes itself before running.
+- USB network: NetworkManager connection `pigps-usb0` keeps retrying DHCP forever and
+  always holds `192.168.137.2` (Windows ICS DHCP sometimes doesn't answer; NM used to
+  give up and drop all addresses for 5 min).
+- `pi/install.sh`: one command to install/update all Pi-side scripts and services;
+  also applies the 0.135 s NMEA offset and makes the journal persistent.
 - `windows/gpx2kmz.py`: GPX → KMZ for Google Earth (gx:Track with time slider,
   start/end pins). Repairs truncated files (NUL padding / missing tags) by keeping
   complete points. `getPhotoGPS.ps1` runs it after every ingest.

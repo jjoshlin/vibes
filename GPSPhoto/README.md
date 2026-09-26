@@ -47,8 +47,10 @@ GPSPhoto/
 │   ├── boot/config.txt.additions lines appended to /boot/firmware/config.txt
 │   ├── boot/cmdline.txt.example  what a working cmdline.txt looks like
 │   ├── setup_gps_time.sh         installs gpsd + chrony, GPS/PPS as the clock
-│   ├── pigps-logger              logger wrapper (repairs GPX, waits for time)
-│   └── pigps-logger.service      systemd unit
+│   ├── install.sh                installs/updates everything below (sudo)
+│   ├── pigps-logger(.service)    logger wrapper (repairs GPX, waits for time)
+│   ├── pigps-timesync(.service/.timer)  GPS time at boot + every 10 min, saves it
+│   └── pigps-clocksave.service   saves the time at shutdown
 ├── windows/
 │   ├── setup-ssh-key.ps1         one-time passwordless SSH
 │   ├── getPhotoGPS.ps1           move tracks to I:\gps\ingest (+ KMZ)
@@ -86,14 +88,27 @@ faster on a Zero.)
 
 ### 4. GPS time + logging (on the Pi)
 ```bash
-sudo bash setup_gps_time.sh
-sudo install -m 755 pigps-logger /usr/local/bin/pigps-logger
-sudo install -m 644 pigps-logger.service /etc/systemd/system/
-mkdir -p ~/tracks
-sudo systemctl daemon-reload && sudo systemctl enable --now pigps-logger
+sudo bash setup_gps_time.sh     # once: packages, gpsd, chrony GPS/PPS
+sudo bash install.sh            # logger, time sync, services (re-run to update)
 ```
+Copy the whole `pi/` folder to the Pi first (e.g. `scp pi/* pigps@pigps.local:pigps-install/`).
 Check: `cgps -s` (3D fix), `ppstest /dev/pps0` (one line per second),
-`chronyc sources -v` (`#* PPS`), `ls -l ~/tracks`.
+`chronyc sources -v` (`#* PPS`), `ls -l ~/tracks`, `tail ~/timesync.log`.
+
+### Time keeping
+The Pi has no RTC; at boot systemd sets the clock from the mtime of
+`/var/lib/systemd/timesync/clock`. Installing chrony stops anything updating that
+file, so without help every boot starts at the time chrony was installed.
+* **chrony** locks to GPS continuously once there's a fix (NMEA numbers the seconds,
+  PPS gives the edge; `makestep 1 -1` allows stepping at any time).
+* **`pigps-timesync`** (timer: 30 s after boot, then every 10 min) waits up to 3 min
+  for a GPS fix, steps the clock to it, and saves the time for the next boot. Without
+  a fix it only saves, so a boot never starts earlier than the last save.
+* The GPS module's own coin-cell clock is **not** used: before a fix the MTK3339 can
+  report the wrong date (a +1 day jump was seen), so gpsd runs without `-r`.
+* Track files are renamed at ingest to the time of their first GPS point, so a stale
+  clock at boot never gives a file a wrong name.
+  **`pigps-clocksave`** saves it again at shutdown. Log: `~/timesync.log`.
 
 ### 5. Offload (on the PC)
 Run `windows/setup-ssh-key.ps1` once in a normal PowerShell window, then

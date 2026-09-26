@@ -1,0 +1,10 @@
+[Unit]
+Description=PI_GPS: GPS time sync 30 s after boot, then every 10 minutes
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=10min
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

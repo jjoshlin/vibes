@@ -1,0 +1,36 @@
+#!/bin/bash
+# PI_GPS: put the system clock on GPS time and save it for the next boot.
+# Runs 30 s after boot and every 10 minutes (pigps-timesync.timer), and at shutdown.
+#   pigps-timesync        sync + save
+#   pigps-timesync save   save only (shutdown)
+#
+# The Pi has no RTC. At boot systemd sets the clock to the mtime of
+# /var/lib/systemd/timesync/clock, so touching that file is how the time is saved.
+# Only a real GPS fix (chrony source PPS/NMEA) is trusted: the MTK3339's own clock
+# can report the wrong DATE (seen: +1 day) until it has satellites.
+CLOCK=/var/lib/systemd/timesync/clock
+LOG=/home/pigps/timesync.log
+
+save() { mkdir -p "$(dirname "$CLOCK")"; touch "$CLOCK"; }
+log()  { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*" >> "$LOG"; tail -n 1000 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"; }
+source_now() { IFS=, read -r _ ref _ _ offset _ < <(chronyc -c tracking 2>/dev/null); }
+
+if [ "$1" = save ]; then save; log "shutdown: time saved"; exit 0; fi
+
+# Wait up to 3 min for chrony to lock onto the GPS (right after boot it needs a
+# few samples), stepping the clock as soon as it does.
+for i in $(seq 18); do
+  chronyc -a makestep >/dev/null 2>&1
+  source_now
+  if [ "$ref" = PPS ] || [ "$ref" = NMEA ]; then
+    save
+    log "synced src=$ref offset=${offset}s saved"
+    exit 0
+  fi
+  sleep 10
+done
+
+# No fix: keep the current clock (restored from the last save) and move the saved
+# time forward so the next boot starts no earlier than now.
+save
+log "no GPS fix yet (ref=${ref:-none}); clock left as is, saved"

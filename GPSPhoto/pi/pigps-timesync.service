@@ -1,0 +1,8 @@
+[Unit]
+Description=PI_GPS: sync clock to GPS and save it
+Wants=gpsd.service chrony.service
+After=gpsd.service chrony.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pigps-timesync

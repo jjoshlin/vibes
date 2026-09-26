@@ -41,7 +41,13 @@ foreach ($name in $remote.Keys | Sort-Object) {
     $src = Join-Path $Staging $name
     if (-not (Test-Path $src)) { Write-Host "MISSING  $name" -ForegroundColor Red; continue }
 
-    $base   = [IO.Path]::GetFileNameWithoutExtension($name)
+    # Name by the first GPS timestamp inside the file (the Pi's clock may have been
+    # stale when it created the file); fall back to the Pi's file name.
+    $base  = [IO.Path]::GetFileNameWithoutExtension($name)
+    $head  = Get-Content $src -TotalCount 60 -ErrorAction SilentlyContinue | Out-String
+    if ($head -match '<trkpt[\s\S]*?<time>(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)') {
+        $base = "track_$($Matches[1])$($Matches[2])$($Matches[3])_$($Matches[4])$($Matches[5])$($Matches[6])Z"
+    }
     $target = Join-Path $Dest "${base}_ingested_$Stamp.gpx"
     $ok     = (Get-Item $src).Length -eq $remote[$name]
     Move-Item $src $target -Force

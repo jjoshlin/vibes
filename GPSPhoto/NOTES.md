@@ -75,3 +75,20 @@ Things that were not obvious, in the order they bit.
 ## Don't `apt upgrade` casually
 - It pulled Chromium and desktop packages plus new boot firmware on a Zero. If you do
   upgrade, leave it plugged in until it finishes and reboot once while you're at a PC.
+
+## USB network dropouts (2026-09-26)
+- The Pi never rebooted; NetworkManager dropped `usb0`. Windows ICS DHCP sometimes
+  doesn't answer, NM fails activation after 45 s, removes every address (IPv4 and
+  IPv6 link-local) and retries 5 min later. Fixed with the `pigps-usb0` connection:
+  `ipv4.may-fail yes`, `dhcp-timeout infinity`, static `192.168.137.2/24`,
+  `ipv6.method link-local`, `autoconnect-retries 0`.
+- Under the hood the Raspberry Pi gadget *is* `g_ether` (kernel: "g_ether gadget.0 ...
+  bound driver g_ether") with Raspberry Pi's USB IDs. That's why `modules-load=dwc2,g_ether`
+  must stay in `cmdline.txt`.
+- `192.168.137.2` is a new name to Windows OpenSSH; confirm the host key fingerprint
+  matches `pigps.local` before trusting it.
+
+## GPS module clock before a fix
+- With gpsd `-r` the MTK3339 reported 2026-09-27 at 17:21 UTC and 2026-09-26 a minute
+  later, i.e. its date was a day off until it had satellites. Never set the system
+  clock from it. Only PPS/NMEA with a fix (chrony) is trusted.
