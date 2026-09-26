@@ -62,11 +62,16 @@ GPSPhoto/
 Raspberry Pi Imager → Device **Raspberry Pi Zero** → **Raspberry Pi OS Lite (32-bit)**.
 Customisation: hostname `pigps`, user `pigps`, enable SSH (password), locale/time zone,
 and **enable USB gadget mode** if offered.
+(The current card actually runs the full Desktop image; it works, but Lite boots much
+faster on a Zero.)
 
 ### 2. Edit the boot partition (the `bootfs` drive on the PC)
 * Append [`pi/boot/config.txt.additions`](pi/boot/config.txt.additions) to `config.txt`.
-* In `cmdline.txt` (one line) delete `console=serial0,115200 `. Do **not** add
-  `modules-load=dwc2,g_ether` — Raspberry Pi OS uses its own `rpi-usb-gadget`.
+* In `cmdline.txt` (one line) delete `console=serial0,115200 ` and **keep/add**
+  `modules-load=dwc2,g_ether` right after `rootwait`. Without it USB networking fails
+  after a reboot ("Device Descriptor Request Failed" on Windows), even though the
+  device still shows up as rpi-usb-gadget (`2E8A:0013`) when it works.
+  See [`pi/boot/cmdline.txt.example`](pi/boot/cmdline.txt.example).
 
 ### 3. Connect over USB from Windows
 1. Plug the Pi's **USB** (inner) port into the PC. First boot takes a few minutes.

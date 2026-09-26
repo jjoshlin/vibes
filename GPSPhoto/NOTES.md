@@ -24,7 +24,9 @@ Things that were not obvious, in the order they bit.
   Windows OpenSSH can use those via `pigps.local`; PuTTY/mRemoteNG can't resolve it.
   With ICS on, the PC is `192.168.137.1` and the Pi gets `192.168.137.x`
   (`192.168.137.1` is the PC — "connection refused" there is expected).
-- Don't mix `modules-load=dwc2,g_ether` with rpi-usb-gadget.
+- **Keep `modules-load=dwc2,g_ether` in `cmdline.txt`.** It looks redundant next to
+  rpi-usb-gadget (the device still enumerates as `2E8A:0013`), but removing it broke
+  USB networking on the next reboot while the Pi otherwise booted normally.
 - "Unknown USB Device (Device Descriptor Request Failed)" means the Pi's USB gadget
   isn't answering: still booting, halted, or boot-looping.
 
@@ -55,3 +57,21 @@ Things that were not obvious, in the order they bit.
   pull-up, so no resistor. Pin 14 is a free GND.
 - If the button is stuck or wired to GND permanently, the Pi shuts down right after
   boot and GPIO3 wakes it again — a boot loop. Unplug the pin-5 wire to rule it out.
+
+## Recovering tracks when the Pi is unreachable
+- The tracks live on the card's ext4 partition, which Windows can't open. With the
+  card in a reader, run as administrator (find the disk number and partition offset
+  with `Get-Partition`):
+  ```powershell
+  $p = Get-Partition -DiskNumber 1 -PartitionNumber 2
+  python tools\ext4read.py \\.\PhysicalDrive1 $p.Offset ls  /home/pigps/tracks
+  python tools\ext4read.py \\.\PhysicalDrive1 $p.Offset get /home/pigps/tracks I:\gps\ingest _ingested_YYYYMMDD
+  ```
+  It only reads. Data still in the ext4 journal (the last seconds before a power cut)
+  won't be seen.
+- `wsl --mount` would also work, but needs the Virtual Machine Platform feature.
+- FAT timestamps on `bootfs` written by the Pi are UTC; Windows shows them as local.
+
+## Don't `apt upgrade` casually
+- It pulled ~Chromium and desktop packages plus new boot firmware on a Zero. If you do
+  upgrade, leave it plugged in until it finishes and reboot once while you're at a PC.

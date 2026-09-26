@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-26 — USB networking recovery
+
+### Fixed
+- USB networking died after the first reboot following the 2026-09-25 changes
+  (Windows: "Unknown USB Device (Device Descriptor Request Failed)"). The Pi itself
+  kept booting and logging. Restoring `modules-load=dwc2,g_ether` in `cmdline.txt`
+  brought it back; the 2026-09-25 advice to remove it was wrong.
+
+### Changed
+- `gpio-shutdown` button line is commented out in the Pi's `config.txt` while the
+  USB problem was isolated. Not the cause as far as we know; re-enable and retest.
+- README / NOTES / `cmdline.txt.example` now say to keep `modules-load=dwc2,g_ether`.
+
+### Added
+- `tools/ext4read.py`: read-only ext4 reader for a Pi SD card in a Windows reader
+  (no WSL or extra software). Used to recover 8 tracks while USB was down.
+
+### Found
+- The card runs the full Desktop image (not Lite), and `apt upgrade -y` was run on
+  2026-09-25 09:44 local, updating raspi-firmware (20260907 → 20260915) and
+  regenerating the initramfs. Kernel stayed 6.18.50.
+
 ## 2026-09-25 — Working logger
 
 ### Added
@@ -19,10 +41,11 @@
 - Google Drive docs copied to `docs/drive/`.
 
 ### Changed
-- Reflashed with Raspberry Pi OS Lite (32-bit, Trixie) instead of the unknown base image.
+- Reflashed with Raspberry Pi OS (32-bit, Trixie) instead of the unknown base image
+  (turned out to be the Desktop variant, see 2026-09-26).
 - USB networking now uses Raspberry Pi's `rpi-usb-gadget` (VID 2E8A:0013) and its
-  Windows driver instead of `g_ether` + the generic RNDIS driver.
-- Removed `modules-load=dwc2,g_ether` from `cmdline.txt` (conflicts with rpi-usb-gadget).
+  Windows driver instead of the generic RNDIS driver.
+- Removed `modules-load=dwc2,g_ether` from `cmdline.txt` — **reverted 2026-09-26**.
 - NMEA refclock offset 0.3 → 0.135 s (measured by chrony and cgps).
 - gpxlogger now runs with `-r` so a lost fix starts a new segment instead of exiting.
 - Shutdown button moved from the Recommendations doc's GPIO21 (pin 40) to GPIO3
