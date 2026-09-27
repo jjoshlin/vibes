@@ -1,6 +1,7 @@
 """Fill Location / City / State / Country for geotagged photos.
 
-usage: python geocode_photos.py <folder> [--dry-run] [--offline]
+usage: python geocode_photos.py <folder> [--dry-run] [--offline] [--overwrite]
+  --overwrite  no *_original backups (e.g. for Lightroom export folders)
 
 For each spot (photos grouped on a ~50 m grid) one reverse-geocode lookup:
   * I:\\gps\\places.csv       -> your own place names (name,lat,lon,radius_m)
@@ -172,7 +173,8 @@ def main():
         with tempfile.NamedTemporaryFile('w', suffix='.args', delete=False, encoding='utf-8') as f:
             f.write('\n'.join(['-charset', 'iptc=UTF8', '-IPTC:CodedCharacterSet=UTF8', *tags, *files]))
             argfile = f.name
-        subprocess.run([EXIFTOOL, '-q', '-m', '-@', argfile])   # -m: legacy IPTC truncation is fine
+        extra = ['-overwrite_original'] if '--overwrite' in sys.argv else []
+        subprocess.run([EXIFTOOL, '-q', '-m', *extra, '-@', argfile])   # -m: legacy IPTC truncation is fine
         os.remove(argfile)
 
     os.makedirs(os.path.dirname(CACHE), exist_ok=True)
