@@ -23,7 +23,7 @@ New-Item -ItemType Directory -Force "$work\files" | Out-Null
 
 # 1. Positions and times of the geotagged photos
 $meta = & $ExifTool -j -n -q -if '$GPSLatitude' -GPSLatitude -GPSLongitude -GPSAltitude `
-        -SubSecDateTimeOriginal -DateTimeOriginal -FileName -ext NEF -ext JPG -ext HIF $Folder 2>$null |
+        -SubSecDateTimeOriginal -DateTimeOriginal -FileName -XMP-iptcCore:Location -XMP-photoshop:City -XMP-photoshop:State -ext NEF -ext JPG -ext HIF $Folder 2>$null |
         Out-String | ConvertFrom-Json
 if (-not $meta) { Write-Host "No geotagged photos in $Folder" -ForegroundColor Yellow; return }
 
@@ -65,12 +65,16 @@ foreach ($m in ($meta | Sort-Object SubSecDateTimeOriginal)) {
     if (-not (Test-Path "$work\$($img -replace '/', '\')")) { continue }
     $dto  = [datetimeoffset]::Parse(($m.SubSecDateTimeOriginal -replace '^(\d{4}):(\d\d):(\d\d)', '$1-$2-$3'))
     $local = $dto.ToString('yyyy-MM-dd HH:mm:ss')
+    # "Place - City, State" (inside CDATA, so plain text; no XML escaping)
+    $cityState = @($m.City, $m.State) | Where-Object { $_ }
+    $where = @($m.Location, ($cityState -join ', ')) | Where-Object { $_ }
+    $where = ($where -join ' - ') -replace ']]>', ''
     $id = "p$n"; $n++
     [void]$sb.AppendLine(@"
 <Placemark><name></name>
 <Style><IconStyle><scale>1.4</scale><Icon><href>$(Esc $img)</href></Icon></IconStyle><LabelStyle><scale>0</scale></LabelStyle>
 <BalloonStyle><text>`$[description]</text></BalloonStyle></Style>
-<description><![CDATA[<img src="$img" width="640"/><br/><b>$local</b><br/>$($m.FileName)]]></description>
+<description><![CDATA[<img src="$img" width="640"/><br/><b>$local</b><br/>$where<br/>$($m.FileName)]]></description>
 <TimeStamp><when>$($dto.UtcDateTime.ToString('yyyy-MM-ddTHH:mm:ssZ'))</when></TimeStamp>
 <Point><coordinates>$($m.GPSLongitude),$($m.GPSLatitude),0</coordinates></Point></Placemark>
 "@)

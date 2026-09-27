@@ -56,6 +56,7 @@ GPSPhoto/
 │   ├── getPhotoGPS.ps1           move tracks to I:\gps\ingest (+ KMZ)
 │   ├── gpx2kmz.py                GPX → Google Earth KMZ
 │   ├── ingest-shoot.ps1          card → I:\nikon\NNNN (NT2 counter + naming), GPS pull, geotag
+│   ├── geocode_photos.py         Location / City (by ZIP) / State / Country into the photos
 │   └── photos2kmz.ps1            geotagged shoot → Google Earth KMZ with photo pins
 ├── esp32/esp32_pi_console_bridge ESP32 USB↔UART console bridge (fallback access)
 ├── tools/ext4read.py             read tracks off the SD card from Windows
@@ -131,6 +132,15 @@ the next Nikon Transfer folder number under `I:\nikon` with NT2's naming (first 
 bare, then `_01`, `_02`…), advances NT2's counter, pulls tracks from the Pi, geotags by each
 photo's own capture time + UTC offset (only within 5 min of a fix, ≤60 s past a track end) and
 writes `I:\gps\ingest\NNNN photos.kmz` for Google Earth. ExifTool keeps `*_original` backups.
+
+### Location fields
+`geocode_photos.py <folder>` (run by `ingest-shoot.ps1`) fills XMP + IPTC Location, City, State,
+Country and country code, one lookup per ~50 m spot, cached in `I:\gps\geocode_cache.json`:
+1. `I:\gps\places.csv` — your own names (`name,lat,lon,radius_m`), checked first.
+2. Photon (komoot, OpenStreetMap data) — nearest named venue/park/landmark within 200 m.
+3. Nominatim — street, ZIP, state, country; Zippopotam.us turns the ZIP into its postal city.
+4. ExifTool's built-in GeoNames data if offline.
+These online lookups send each spot's coordinates to those public services.
 
 ## Geotagging
 * Lightroom Classic: Map → GPS Tracklog → Load Tracklog → Auto-Tag Selected Photos.

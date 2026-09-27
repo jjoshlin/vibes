@@ -7,6 +7,11 @@
 - `windows/photos2kmz.ps1`: Google Earth KMZ with each photo as a thumbnail pin (embedded NEF
   preview), balloon preview, time stamps and the shoot's track.
 - `gpx2kmz.py` hides segment labels.
+- `windows/geocode_photos.py`: fills Location / City (postal city of the ZIP) / State / Country /
+  country code (XMP + IPTC). Sources: `I:\gps\places.csv` → Photon → Nominatim + Zippopotam.us →
+  ExifTool GeoNames. Public Overpass servers were unreachable/timing out, so not used. Shoot 1134:
+  Highway 90 / The Grove at Heritage Square / Golden Nugget Lake Charles (Saltgrass isn't mapped).
+- Photo KMZ balloons show place, city, state.
 - Result: 309/309 NEFs in `I:\nikon\1134` geotagged. 204 matched directly; 105 (16:13–16:41,
   under trees at The Grove) interpolated across a no-fix gap after confirming <5 m movement.
 - Lesson: don't run Nikon Transfer 2 at the same time — it advanced the counter mid-ingest

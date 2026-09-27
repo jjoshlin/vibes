@@ -124,6 +124,9 @@ Write-Host "`nGeotagging $Dest from $($gpx.Count) track(s)..."
 & $ExifTool -@ $argFile 2>&1 | Where-Object { $_ -notmatch 'Warning: No track points' } | Select-Object -Last 6
 $tagged = (& $ExifTool -q -q -if '$GPSLatitude' -p '$FileName' -ext NEF -ext JPG -ext HIF $Dest 2>$null | Measure-Object).Count
 Write-Host "$tagged of $($plan.Count) photos now have GPS." -ForegroundColor Green
+# Location / City (postal, by ZIP) / State / Country for every geotagged photo
+$geo = Join-Path $PSScriptRoot 'geocode_photos.py'
+if (Test-Path $geo) { Write-Host "`nFilling location fields..."; python $geo $Dest }
 $p2k = Join-Path $PSScriptRoot 'photos2kmz.ps1'
 if (Test-Path $p2k) { & $p2k -Folder $Dest -GpxDir $GpxDir }
 Write-Host "ExifTool kept the untouched originals as *_original; delete them once you're happy:"
