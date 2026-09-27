@@ -53,7 +53,7 @@ def kml(name, segs):
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">',
            f'<Document><name>{escape(name)}</name>',
-           '<Style id="trk"><LineStyle><color>ff00a5ff</color><width>4</width></LineStyle>'
+           '<Style id="trk"><LineStyle><color>ff00a5ff</color><width>4</width></LineStyle><LabelStyle><scale>0</scale></LabelStyle>'
            '<IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/shapes/track.png</href></Icon></IconStyle></Style>',
            '<Style id="start"><IconStyle><color>ff00ff00</color><Icon><href>http://maps.google.com/mapfiles/kml/paddle/grn-circle.png</href></Icon></IconStyle></Style>',
            '<Style id="end"><IconStyle><color>ff0000ff</color><Icon><href>http://maps.google.com/mapfiles/kml/paddle/red-square.png</href></Icon></IconStyle></Style>',

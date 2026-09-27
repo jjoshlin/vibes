@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-26 (evening) — First shoot: Sulphur Homecoming
+- `windows/ingest-shoot.ps1`: card → `I:\nikon\NNNN` using Nikon Transfer 2's folder counter and
+  file naming (read/written in `HKCU\Software\Nikon\NkFramework\Nikon Transfer 2`), size-verified
+  copy (8.6 GB in 25 s vs NT2 stalling at ~1–18 MB/s), GPS pull, geotag, photo KMZ.
+- `windows/photos2kmz.ps1`: Google Earth KMZ with each photo as a thumbnail pin (embedded NEF
+  preview), balloon preview, time stamps and the shoot's track.
+- `gpx2kmz.py` hides segment labels.
+- Result: 309/309 NEFs in `I:\nikon\1134` geotagged. 204 matched directly; 105 (16:13–16:41,
+  under trees at The Grove) interpolated across a no-fix gap after confirming <5 m movement.
+- Lesson: don't run Nikon Transfer 2 at the same time — it advanced the counter mid-ingest
+  (script now refuses unless `-Folder` is given).
+
 ## 2026-09-26 — USB networking recovery
 
 ### Fixed

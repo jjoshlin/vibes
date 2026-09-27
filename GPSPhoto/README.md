@@ -54,7 +54,9 @@ GPSPhoto/
 ├── windows/
 │   ├── setup-ssh-key.ps1         one-time passwordless SSH
 │   ├── getPhotoGPS.ps1           move tracks to I:\gps\ingest (+ KMZ)
-│   └── gpx2kmz.py                GPX → Google Earth KMZ
+│   ├── gpx2kmz.py                GPX → Google Earth KMZ
+│   ├── ingest-shoot.ps1          card → I:\nikon\NNNN (NT2 counter + naming), GPS pull, geotag
+│   └── photos2kmz.ps1            geotagged shoot → Google Earth KMZ with photo pins
 ├── esp32/esp32_pi_console_bridge ESP32 USB↔UART console bridge (fallback access)
 ├── tools/ext4read.py             read tracks off the SD card from Windows
 └── docs/drive/                   original Google Drive docs (22 Sep 2026 snapshot)
@@ -122,6 +124,13 @@ Google Earth with a time slider. Cut-off tracks are repaired up to the last comp
 1. Power on; wait for the GPS FIX LED to blink once every 15 s.
 2. Shoot. Tracks are UTC; set the camera offset in Lightroom/ExifTool.
 3. **Hold the button ~1 s**, wait for the green LED to go out, then unplug.
+
+## Ingesting a shoot
+`.\windows\ingest-shoot.ps1 -Prefix "Event name "` (close Nikon Transfer 2 first). It copies the card into
+the next Nikon Transfer folder number under `I:\nikon` with NT2's naming (first shot in a minute
+bare, then `_01`, `_02`…), advances NT2's counter, pulls tracks from the Pi, geotags by each
+photo's own capture time + UTC offset (only within 5 min of a fix, ≤60 s past a track end) and
+writes `I:\gps\ingest\NNNN photos.kmz` for Google Earth. ExifTool keeps `*_original` backups.
 
 ## Geotagging
 * Lightroom Classic: Map → GPS Tracklog → Load Tracklog → Auto-Tag Selected Photos.
