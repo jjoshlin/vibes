@@ -26,7 +26,8 @@
 - Oct 13 placed from the user's account: café wait at Greene Street Cigars & Cafe (next to
   Papa's Pilar) until the 10:00 Pilar tour, Pilar 10:08-10:30, Key West First Legal Rum
   Distillery 10:42-10:52 (split at the 10:30 -> 10:42 photo break). Boyd's Key West Campground,
-  Kermit's and both distilleries added to places.csv. 787 of 795 tagged (8 left: Oct 13, 21:00).
+  Kermit's and both distilleries added to places.csv. 20 photos 1-5 min before the first Oct 14
+  fix placed at Garden Key (ESTIMATED, arrival). 787 of 795 tagged (8 left: Oct 13, 21:00).
 - `run_parallel`: quiet options moved into `-common_args` (no per-file output).
 - Offshore points no longer take the offline "nearest town" (Key West, 50 km away) as their
   city, so the Gulf → Dry Tortugas rule applies.
