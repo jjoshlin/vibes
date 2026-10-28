@@ -17,7 +17,14 @@
 - Result for `I:\nikon\1135`: 607 of 795 NEFs tagged, all with Location/City/State/Country.
   Monkey Jungle visit (143 photos under thick canopy) placed by the user's account of the visit;
   Garden Key / Fort Jefferson photos get City "Dry Tortugas"; Freedom Factory (Bradenton
-  Motorsports Park) named via `places.csv`. 188 left untagged: GPS sensor covered for hours.
+  Motorsports Park) named via `places.csv`.
+- Placed from the user's account (marked in `GPSProcessingMethod` as MANUAL / ESTIMATED):
+  57 photos at the Tesla Supercharger behind Winn-Dixie, Big Pine Key (chickens, Key deer);
+  40 at Garden Key before the 15:00 Yankee Freedom departure; 12 on the ferry back, estimated at
+  25 kn (rough seas, 24-26 kn) along the 58.7 nm route to Key West Bight (docks ~17:20, matching
+  the 17:37 fix already in town). 716 of 795 tagged; 79 left (Oct 13).
+- Offshore points no longer take the offline "nearest town" (Key West, 50 km away) as their
+  city, so the Gulf → Dry Tortugas rule applies.
 ## 2026-09-26 (evening) — First shoot: Sulphur Homecoming
 - `windows/ingest-shoot.ps1`: card → `I:\nikon\NNNN` using Nikon Transfer 2's folder counter and
   file naming (read/written in `HKCU\Software\Nikon\NkFramework\Nikon Transfer 2`), size-verified

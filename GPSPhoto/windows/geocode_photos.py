@@ -124,6 +124,8 @@ def lookup(lat, lon, sample_path, use_net):
                     'country': a.get('country'), 'cc': cc, 'zip': zipc, 'source': 'osm'}
             if not info['city'] or not info['state']:          # patch gaps offline
                 off = offline(sample_path)
+                if not info['city'] and off['city']:
+                    info['city_guessed'] = True                 # "nearest town", not a real address
                 for k in ('city', 'state', 'country', 'cc'):
                     info[k] = info[k] or off[k]
             return info
@@ -143,8 +145,11 @@ def finalize(info, lat, lon, use_net):
     if mine:                                  # an empty name = override the city only
         info['location'] = mine[0] or info.get('location')
         info['city'] = mine[1] or info.get('city')
-    # Offshore in the Gulf with no city: the boat trips were to the Dry Tortugas.
-    if not info.get('city') and GULF[0] <= lat <= GULF[1] and GULF[2] <= lon <= GULF[3]:
+    # Offshore in the Gulf with no real city (none, or only the offline "nearest town" guess):
+    # the boat trips were to the Dry Tortugas.
+    offshore = not info.get('city') or info.get('city_guessed') or info.get('source') == 'offline'
+    if offshore and not mine and GULF[0] <= lat <= GULF[1] and GULF[2] <= lon <= GULF[3]:
+        info['location'] = None if info.get('location') == info.get('city') else info.get('location')
         info.update(city='Dry Tortugas', location=info.get('location') or 'Dry Tortugas',
                     state=info.get('state') or 'Florida', country=info.get('country') or 'United States',
                     cc=info.get('cc') or 'US')
