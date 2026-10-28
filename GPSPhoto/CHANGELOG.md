@@ -23,6 +23,11 @@
   40 at Garden Key before the 15:00 Yankee Freedom departure; 12 on the ferry back, estimated at
   25 kn (rough seas, 24-26 kn) along the 58.7 nm route to Key West Bight (docks ~17:20, matching
   the 17:37 fix already in town). 716 of 795 tagged; 79 left (Oct 13).
+- Oct 13 placed from the user's account: café wait at Greene Street Cigars & Cafe (next to
+  Papa's Pilar) until the 10:00 Pilar tour, Pilar 10:08-10:30, Key West First Legal Rum
+  Distillery 10:42-10:52 (split at the 10:30 -> 10:42 photo break). Boyd's Key West Campground,
+  Kermit's and both distilleries added to places.csv. 787 of 795 tagged (8 left: Oct 13, 21:00).
+- `run_parallel`: quiet options moved into `-common_args` (no per-file output).
 - Offshore points no longer take the offline "nearest town" (Key West, 50 km away) as their
   city, so the Gulf → Dry Tortugas rule applies.
 ## 2026-09-26 (evening) — First shoot: Sulphur Homecoming

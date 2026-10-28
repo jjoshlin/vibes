@@ -244,8 +244,8 @@ def run_parallel(jobs, threads, common):
             f.write('\n'.join(lines))
             argfiles.append(f.name)
         # -m: legacy IPTC truncation is fine; -common_args applies to every -execute block
-        procs.append(subprocess.Popen([EXIFTOOL, '-q', '-q', '-m', '-@', f.name,
-                                       '-common_args', *extra, *common]))
+        procs.append(subprocess.Popen([EXIFTOOL, '-@', f.name,
+                                       '-common_args', '-q', '-q', '-m', *extra, *common]))
     try:
         for p in procs:
             p.wait()
