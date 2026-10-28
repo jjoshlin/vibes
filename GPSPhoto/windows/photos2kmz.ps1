@@ -8,7 +8,8 @@
 param(
     [Parameter(Mandatory)][string]$Folder,
     [string]$GpxDir = 'I:\gps\ingest',
-    [string]$Out
+    [string]$Out,
+    [int]$Threads = 10
 )
 $ExifTool = "$env:LOCALAPPDATA\Programs\ExifTool\ExifTool.exe"
 if (-not (Test-Path $ExifTool)) { $ExifTool = 'exiftool' }
@@ -28,8 +29,21 @@ $meta = & $ExifTool -j -n -q -if '$GPSLatitude' -GPSLatitude -GPSLongitude -GPSA
 if (-not $meta) { Write-Host "No geotagged photos in $Folder" -ForegroundColor Yellow; return }
 
 # 2. The camera's embedded preview JPEG, one ExifTool call for the folder
-& $ExifTool -q -b -PreviewImage -w "$work\files\%f.jpg" -ext NEF -ext HIF $Folder 2>$null
-& $ExifTool -q -b -ThumbnailImage -w "$work\files\%f.jpg" -ext JPG $Folder 2>$null
+#    (geotagged photos only, split across $Threads parallel ExifTool workers)
+$want = @($meta | ForEach-Object { Join-Path $Folder $_.FileName })
+$procs = @()
+for ($w = 0; $w -lt [Math]::Min($Threads, $want.Count); $w++) {
+    $mine = for ($i = $w; $i -lt $want.Count; $i += $Threads) { $want[$i] }
+    $raw  = @($mine | Where-Object { $_ -notmatch '\.jpe?g$' })
+    $jpg  = @($mine | Where-Object { $_ -match '\.jpe?g$' })
+    $lines = @('-q', '-q', '-b', '-w', "$work\files\%f.jpg")
+    if ($raw) { $lines += @('-PreviewImage') + $raw }
+    if ($jpg) { $lines += @('-execute', '-q', '-q', '-b', '-w', "$work\files\%f.jpg", '-ThumbnailImage') + $jpg }
+    $af = Join-Path $env:TEMP "photos2kmz-$w.args"
+    [IO.File]::WriteAllLines($af, $lines)
+    $procs += Start-Process $ExifTool -ArgumentList '-@', "`"$af`"" -NoNewWindow -PassThru
+}
+$procs | Wait-Process
 
 # 3. Track(s) overlapping the shoot, from the ingested GPX files
 $tLo = ($meta | ForEach-Object { $_.SubSecDateTimeOriginal } | ForEach-Object {

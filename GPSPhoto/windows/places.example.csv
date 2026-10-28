@@ -1,0 +1,7 @@
+name,lat,lon,radius_m,city
+# Your own place names. Photos within radius_m metres get this Location.
+# optional 5th column: city to use instead of the map's / ZIP's
+Monkey Jungle,25.5675,-80.4320,350,Miami
+Freedom Factory (Bradenton Motorsports Park),27.4705,-82.3262,700,Bradenton
+# empty name = keep the map's place names, only set the city
+,24.6280,-82.8730,5000,Dry Tortugas

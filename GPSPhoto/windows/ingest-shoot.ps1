@@ -5,6 +5,8 @@
 #   .\ingest-shoot.ps1                 # card auto-detected, prefix/number from NT2
 #   .\ingest-shoot.ps1 -Prefix "Sulphur hoco " -WhatIf    # show the plan only
 #   .\ingest-shoot.ps1 -NoGeotag -NoGps                   # copy only
+#   .\ingest-shoot.ps1 -Folder 1135 -SkipCopy             # already copied (e.g. by NT2):
+#                                                         # just GPS pull, geotag, locations, KMZ
 #
 # Naming (same as NT2 "prefix + date/time to the minute"):
 #   <Prefix>_MM_dd_yyyy_HH_mm_.NEF       first shot in that minute
@@ -17,6 +19,8 @@ param(
     [string]$GpxDir   = 'I:\gps\ingest',
     [switch]$NoGps,                      # skip pulling tracks from the Pi
     [switch]$NoGeotag,
+    [switch]$SkipCopy,                   # photos already in -Folder: skip card + copy steps
+    [int]   $Threads  = 10,              # parallel ExifTool workers for the write steps
     [switch]$WhatIf
 )
 
@@ -25,7 +29,17 @@ if (-not (Test-Path $ExifTool)) { $ExifTool = 'exiftool' }
 $Common   = 'HKCU:\Software\Nikon\Common\Transfer'
 $Exts     = '.NEF', '.NRW', '.JPG', '.JPEG', '.HIF', '.HEIF', '.TIF', '.MOV', '.MP4'
 
+# --- 0. Already copied: process the existing folder -----------------------------
+if ($SkipCopy) {
+    if ($Folder -le 0) { Write-Host '-SkipCopy needs -Folder <number>.' -ForegroundColor Red; return }
+    $Dest = Join-Path $Root ('{0:D4}' -f $Folder)
+    if (-not (Test-Path $Dest)) { Write-Host "$Dest not found." -ForegroundColor Red; return }
+    $plan = @(Get-ChildItem $Dest -File | Where-Object { $Exts -contains $_.Extension.ToUpper() })
+    Write-Host "Folder: $Dest  ($($plan.Count) photos/videos, copy skipped)"
+}
+
 # --- 1. Where from, where to ---------------------------------------------------
+if (-not $SkipCopy) {
 if (Get-Process NktTransfer2 -ErrorAction SilentlyContinue) {
     Write-Host 'Nikon Transfer 2 is running; it may advance the folder counter under us.' -ForegroundColor Yellow
     Write-Host 'Close it first, or pass -Folder <number> explicitly.' -ForegroundColor Yellow
@@ -99,6 +113,7 @@ if ($Folder -ge $next) {
     Set-ItemProperty "$Common\TransferredFolder" -Name LatestPrimaryPath -Value $Dest -ErrorAction SilentlyContinue
     Write-Host "Nikon Transfer: next folder is now $('{0:D4}' -f ($Folder + 1)), destination $Root"
 }
+}   # end if (-not $SkipCopy)
 
 # --- 6. Pull tracks from the Pi, then geotag ------------------------------------
 if (-not $NoGps) {
@@ -115,18 +130,30 @@ if (-not $gpx) { Write-Host "No GPX files in $GpxDir; skipping geotag." -Foregro
 
 # Match on the camera's own capture time incl. its UTC offset; only interpolate
 # across gaps up to 5 min and never extrapolate more than 60 s past a track.
-$argFile = Join-Path $env:TEMP 'ingest-geotag.args'
-$geoArgs = @('-api', 'GeoMaxIntSecs=300', '-api', 'GeoMaxExtSecs=60') +
-        ($gpx | ForEach-Object { '-geotag'; $_.FullName }) +
-        @('-geotime<SubSecDateTimeOriginal', '-ext', 'NEF', '-ext', 'JPG', '-ext', 'HIF', $Dest)
-[IO.File]::WriteAllLines($argFile, $geoArgs)
-Write-Host "`nGeotagging $Dest from $($gpx.Count) track(s)..."
-& $ExifTool -@ $argFile 2>&1 | Where-Object { $_ -notmatch 'Warning: No track points' } | Select-Object -Last 6
+# Only photos without GPS, split across $Threads parallel ExifTool workers.
+$todo = @(& $ExifTool -q -q -if 'not $GPSLatitude' -p '$Directory/$FileName' -ext NEF -ext JPG -ext HIF $Dest 2>$null)
+Write-Host "`nGeotagging $($todo.Count) photos in $Dest from $($gpx.Count) track(s), $Threads workers..."
+$sw = [Diagnostics.Stopwatch]::StartNew()
+$procs = @()
+for ($w = 0; $w -lt [Math]::Min($Threads, $todo.Count); $w++) {
+    $mine = for ($i = $w; $i -lt $todo.Count; $i += $Threads) { $todo[$i] }
+    $af = Join-Path $env:TEMP "ingest-geotag-$w.args"
+    $geoArgs = @('-q', '-q', '-m', '-api', 'GeoMaxIntSecs=300', '-api', 'GeoMaxExtSecs=60') +
+               ($gpx | ForEach-Object { '-geotag'; $_.FullName }) +
+               @('-geotime<SubSecDateTimeOriginal') + $mine
+    [IO.File]::WriteAllLines($af, $geoArgs)
+    $procs += Start-Process $ExifTool -ArgumentList '-@', "`"$af`"" -NoNewWindow -PassThru
+}
+$procs | Wait-Process
+Write-Host ("Geotag done in {0:N0} s" -f $sw.Elapsed.TotalSeconds)
+# Photos in short stationary GPS gaps (indoors, thick cover)
+$gaps = Join-Path $PSScriptRoot 'geotag_gaps.py'
+if (Test-Path $gaps) { python -I $gaps $Dest --gpx-dir $GpxDir }
 $tagged = (& $ExifTool -q -q -if '$GPSLatitude' -p '$FileName' -ext NEF -ext JPG -ext HIF $Dest 2>$null | Measure-Object).Count
 Write-Host "$tagged of $($plan.Count) photos now have GPS." -ForegroundColor Green
 # Location / City (postal, by ZIP) / State / Country for every geotagged photo
 $geo = Join-Path $PSScriptRoot 'geocode_photos.py'
-if (Test-Path $geo) { Write-Host "`nFilling location fields..."; python $geo $Dest }
+if (Test-Path $geo) { Write-Host "`nFilling location fields..."; python -I $geo $Dest --threads $Threads }
 $p2k = Join-Path $PSScriptRoot 'photos2kmz.ps1'
 if (Test-Path $p2k) { & $p2k -Folder $Dest -GpxDir $GpxDir }
 Write-Host "ExifTool kept the untouched originals as *_original; delete them once you're happy:"

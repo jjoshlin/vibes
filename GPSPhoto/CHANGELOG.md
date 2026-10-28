@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-10-27 — 20th anniversary trip (Florida Keys, Dry Tortugas, Miami, Bradenton)
+- Speed: all write steps run 10 ExifTool workers in parallel (`-Threads`, default 10) and skip
+  files whose fields already match. Re-running the whole pipeline on 795 NEFs: ~3 min, of which
+  writing 74 changed files took 2 s; the photo map builds in 35 s (was ~2 min).
+- `ingest-shoot.ps1 -SkipCopy -Folder N`: process a folder already copied by Nikon Transfer.
+  Geotags only photos without GPS, then runs `geotag_gaps.py`.
+- `windows/geotag_gaps.py`: places photos in GPS gaps when the fixes either side are ≤ 3 h and
+  < 150 m apart (stood still / indoors / thick cover); reports why the rest stay untagged.
+- `geocode_photos.py`: `places.csv` gains an optional city column and wins over the map; an empty
+  name sets only the city. Gulf of Mexico + no city → "Dry Tortugas". Never leaves Location empty
+  (1 km place search, then the city). Camera-protected (read-only) photos are unlocked for the
+  write and re-protected; stale `*_exiftool_tmp` files are cleared.
+- Tracks were read off the SD card (`tools/ext4read.py`, needs an admin shell) because the Pi's
+  USB network didn't come up after the PC was rebooted / the Pi moved to another port.
+- Result for `I:\nikon\1135`: 607 of 795 NEFs tagged, all with Location/City/State/Country.
+  Monkey Jungle visit (143 photos under thick canopy) placed by the user's account of the visit;
+  Garden Key / Fort Jefferson photos get City "Dry Tortugas"; Freedom Factory (Bradenton
+  Motorsports Park) named via `places.csv`. 188 left untagged: GPS sensor covered for hours.
 ## 2026-09-26 (evening) — First shoot: Sulphur Homecoming
 - `windows/ingest-shoot.ps1`: card → `I:\nikon\NNNN` using Nikon Transfer 2's folder counter and
   file naming (read/written in `HKCU\Software\Nikon\NkFramework\Nikon Transfer 2`), size-verified
